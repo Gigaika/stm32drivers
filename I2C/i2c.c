@@ -1,4 +1,5 @@
 #include "i2c.h"
+#include "stdint.h"
 
 static void I2Cx_ChangeState(I2C_HandleTypeDef *handle, I2C_StateTypeDef newState);
 static void I2Cx_PrepareHandle(I2C_HandleTypeDef *handle, I2C_OperationTypeDef operation, uint8_t devAddress, uint16_t memAddress, uint8_t memSize, uint8_t *data, uint16_t dataSize);
@@ -7,6 +8,14 @@ static void I2Cx_ResetHandle(I2C_HandleTypeDef *handle, I2C_OperationTypeDef ope
 StatusTypeDef I2Cx_Init(I2C_HandleTypeDef *handle, I2C_TypeDef *instance) {
     I2Cx_ResetHandle(handle);
     handle->instance = instance;
+}
+
+
+void I2Cx_AddCallBacks(I2C_HandleTypeDef *handle, I2C_CallBackHandle *callBacks, uint8_t callBacksEnabled[5]) {
+    handle->callBacks = callBacks;
+    for (int i = 0; i < 5; i++) {
+        handle->callBacksEnabled[i] = callBacksEnabled[i];
+    }
 }
 
 /**
@@ -268,17 +277,13 @@ StatusTypeDef I2Cx_MemRead_IT(I2C_HandleTypeDef *handle, uint8_t devAddress, uin
 }
 
 /**
-  *@brief Weak callback that gets called when a I2C transfers results in a NACK
-  *       Should be overwritten in user code.
-  */
-__weak void I2C_NackReceivedCallBack(I2C_HandleTypeDef *handle) {
-
-/**
   *@brief Handles I2C NACK interrupts
   */
 void I2Cx_NACKF_CallBack(I2C_HandleTypeDef *handle) {
   handle->error = I2C_ERROR_NACK;
-  I2C_NackReceivedCallBack(handle);
+  if (handle->callBacksEnabled[I2C_NackReceived]) {
+      handle->callBacks->I2C_NackReceivedCallBack(handle);
+  }
 }
 
 /**
@@ -329,34 +334,6 @@ void I2Cx_RXNE_CallBack(I2C_HandleTypeDef *handle) {
 }
 
 /**
-  *@brief Callback that gets called when a I2C write is completed.
-  *  Should be overwritten in user code
-  */
-__weak void I2C_WriteCpltCallBack(I2C_HandleTypeDef *handle) {
-}
-
-/**
-  *@brief Callback that gets called when a I2C read is completed.
-  *  Should be overwritten in user code
-  */
-__weak void I2C_ReadCpltCallBack(I2C_HandleTypeDef *handle) {
-}
-
-/**
-  *@brief Callback that gets called when a I2C memory write is completed.
-  *  Should be overwritten in user code
-  */
-__weak void I2C_MemTxCpltCallBack(I2C_HandleTypeDef *handle) {
-}
-
-/**
-  *@brief Callback that gets called when a I2C memory read is completed.
-  *  Should be overwritten in user code
-  */
-__weak void I2C_MemRxCpltCallBack(I2C_HandleTypeDef *handle) {
-}
-
-/**
   *@brief Handles I2C transmission completed and stop generated interrupts
   */
 void I2Cx_TC_CallBack(I2C_HandleTypeDef *handle) {
@@ -380,10 +357,14 @@ void I2Cx_TC_CallBack(I2C_HandleTypeDef *handle) {
     case I2C_BUSY_TX:
     {
       if (handle->operation == I2C_MEM_WRITE) {
-        I2C_MemTxCpltCallBack(handle);
+        if (handle->callBacksEnabled[I2C_MemTxCplt]) {
+            handle->callBacks->I2C_MemTxCpltCallBack(handle);
+        }
         I2Cx_ResetHandle(handle);
-      } else if (handle->operation == I2C_READ_IT) {
-        I2C_ReadCpltCallBack(handle);
+      } else if (handle->operation == I2C_WRITE_IT) {
+         if (handle->callBacksEnabled[I2C_WriteCplt]) {
+             handle->callBacks->I2C_WriteCpltCallBack(handle);
+         }
         I2Cx_ResetHandle(handle);
       }
       
@@ -392,10 +373,14 @@ void I2Cx_TC_CallBack(I2C_HandleTypeDef *handle) {
     case I2C_BUSY_RX:
     {
       if (handle->operation == I2C_MEM_READ) {
-        I2C_MemRxCpltCallBack(handle);
+        if (handle->callBacksEnabled[I2C_MemRxCplt]) {
+            handle->callBacks->I2C_MemRxCpltCallBack(handle);
+        }
         I2Cx_ResetHandle(handle);
       } else if (handle->operation == I2C_READ_IT) {
-        I2C_ReadCpltCallBack(handle);
+        if (handle->callBacksEnabled[I2C_ReadCplt]) {
+          handle->callBacks->I2C_ReadCpltCallBack(handle);
+        }
         I2Cx_ResetHandle(handle);
       }
       

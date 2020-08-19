@@ -4,7 +4,7 @@
 
 /*-------------------------IMPORTANT-------------------------*/
 // Import the correct STM32 CMSIS header for your device
-// Call the I2Cx_EV_Handler from the function that overwrites/implements the IVT entry for I2C interrupt events
+// Call the I2Cx_EV_Handler from the function that overwrites/implements the IVT entry for I2Cx interrupt events
 /* The following callbacks can be overwritten to implement functionality dependent on transmission completion:
  * I2C_WriteCpltCallBack
  * I2C_ReadCpltCallBack
@@ -54,10 +54,26 @@ typedef enum {
     I2C_BUSY_RX            = 0x03,
 } I2C_StateTypeDef;
 
-/**
-  * @brief
-  */
-typedef struct {
+typedef enum {
+     I2C_WriteCplt    = 0x00,
+     I2C_ReadCplt     = 0x01,
+     I2C_MemTxCplt    = 0x02,
+     I2C_MemRxCplt    = 0x03,
+     I2C_NackReceived = 0x04,
+} I2C_CallBackTypeDef;
+
+typedef I2C_CallBackHandleStruct I2C_CallBackHandleTypeDef;
+typedef I2C_HandleStruct I2C_HandleTypeDef;
+
+struct I2C_CallBackHandleStruct {
+    void (*I2C_WriteCpltCallBack)(I2C_HandleTypeDef *handle);
+    void (*I2C_ReadCpltCallBack)(I2C_HandleTypeDef *handle);
+    void (*I2C_MemTxCpltCallBack)(I2C_HandleTypeDef *handle);
+    void (*I2C_MemRxCpltCallBack)(I2C_HandleTypeDef *handle);
+    void (*I2C_NackReceivedCallBack)(I2C_HandleTypeDef *handle);
+};
+
+struct I2C_HandleStruct {
     I2C_TypeDef *instance;
     volatile I2C_StateTypeDef state;
     volatile I2C_StateTypeDef previousState;
@@ -70,12 +86,15 @@ typedef struct {
     uint8_t devAddress;
     uint16_t dataBytesTransmitted;
     uint16_t memBytesSent;
-} I2C_HandleTypeDef;
+    uint8_t callBacksEnabled[5];
+    I2C_CallBackHandleTypeDef callBacks;
+};
 
 
 /* Global functions */
 void I2Cx_Send7BitAddress(I2C_TypeDef *instance, uint8_t devAddress, uint8_t numBytes, uint32_t reloadEndMode, uint32_t startStopMode);
 void I2Cx_Init(I2C_HandleTypeDef *handle, I2C_TypeDef *instance);
+void I2Cx_AddCallBacks(I2C_HandleTypeDef *handle, I2C_CallBackHandle *callBacks, uint8_t callBacksEnabled[5]);
 StatusTypeDef I2Cx_Write(I2C_HandleTypeDef *handle, uint8_t devAddress, uint8_t *data, uint16_t dataSize, uint32_t timeout);
 StatusTypeDef I2Cx_Read(I2C_HandleTypeDef *handle, uint8_t devAddress, uint8_t *data, uint16_t dataSize, uint32_t timeout);
 StatusTypeDef I2Cx_Write_IT(I2C_HandleTypeDef *handle, uint8_t devAddress, uint8_t *data, uint16_t dataSize);
