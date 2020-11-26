@@ -56,7 +56,7 @@ void HTS221_Init(HTS221_Obj *obj, Peripheral_IO_Object *io) {
     obj->IO = io;
 
     obj->IO->read_reg(HTS221_CALIB_0TOF, 1, obj->registers.CALIB_0TOF, 16);
-    if (obj->IO.read_reg_IT_driven) {
+    if (!obj->IO.read_reg_IT_driven) {
         HTS221_Read_Reg_Cplt_Callback();
     }
 }
@@ -64,7 +64,7 @@ void HTS221_Init(HTS221_Obj *obj, Peripheral_IO_Object *io) {
 void HTS221_SetPowered(HTS221_Obj *obj, HTS221_PoweredTypeDef powered) {
     obj->state = HTS221_CONFIGURING;
     obj->IO->write_reg(HTS221_CTRL_REG1, 1, powered << 7, 1);
-    if (obj->IO.write_reg_IT_driven) {
+    if (!obj->IO.write_reg_IT_driven) {
         HTS221_Write_Reg_Cplt_Callback();
     }
 }
@@ -75,7 +75,7 @@ void HTS221_SetResolution(HTS221_Obj *obj, HTS221_AVGTTypeDef tempRes, HTS221_AV
     tempReg |= tempRes << 3;
     tempReg |= humRes;
     obj->IO->write_reg(HTS221_AV_CONFR, 1, tempReg, 1);
-    if (obj->IO.write_reg_IT_driven) {
+    if (!obj->IO.write_reg_IT_driven) {
         HTS221_Write_Reg_Cplt_Callback();
     }
 }
@@ -83,7 +83,7 @@ void HTS221_SetResolution(HTS221_Obj *obj, HTS221_AVGTTypeDef tempRes, HTS221_AV
 void HTS221_SetBDU(HTS221_Obj *obj, HTS221_BDUTypeDef bdu) {
     obj->state = HTS221_CONFIGURING;
     obj->IO->write_reg(HTS221_CTRL_REG1, 1, bdu << 2, 1);
-    if (obj->IO.write_reg_IT_driven) {
+    if (!obj->IO.write_reg_IT_driven) {
         HTS221_Write_Reg_Cplt_Callback();
     }
 }
@@ -91,7 +91,7 @@ void HTS221_SetBDU(HTS221_Obj *obj, HTS221_BDUTypeDef bdu) {
 void HTS221_SetODR(HTS221_Obj *obj, HTS221_ODRTypeDef odr) {
     obj->state = HTS221_CONFIGURING;
     obj->IO->write_reg(HTS221_CTRL_REG1, 1, odr, 1);
-    if (obj->IO.write_reg_IT_driven) {
+    if (!obj->IO.write_reg_IT_driven) {
         HTS221_Write_Reg_Cplt_Callback();
     }
 }
@@ -99,7 +99,7 @@ void HTS221_SetODR(HTS221_Obj *obj, HTS221_ODRTypeDef odr) {
 void HTS221_SetDRDY(HTS221_Obj *obj, HTS221_DRDYTypeDef drdy) {
     obj->state = HTS221_CONFIGURING;
     obj->IO->write_reg(HTS221_CTRL_REG3, 1, drdy << 2, 1);
-    if (obj->IO.write_reg_IT_driven) {
+    if (!obj->IO.write_reg_IT_driven) {
         HTS221_Write_Reg_Cplt_Callback();
     }
 }
@@ -107,7 +107,7 @@ void HTS221_SetDRDY(HTS221_Obj *obj, HTS221_DRDYTypeDef drdy) {
 void HTS221_RequestReading(HTS221_Obj *obj) {
     obj->state = HTS221_REQUESTING;
     obj->IO->write_reg(HTS221_CTRL_REG2, 1, 0x1, 1);
-    if (obj->IO.write_reg_IT_driven) {
+    if (!obj->IO.write_reg_IT_driven) {
         HTS221_Write_Reg_Cplt_Callback();
     }
 }
@@ -115,7 +115,7 @@ void HTS221_RequestReading(HTS221_Obj *obj) {
 void HTS221_Read(HTS221_Obj *obj) {
     obj->state = HTS221_READING;
     obj->IO->read_reg(HTS221_HUMIDITY_OUT_L, 1, obj->registers.HUMIDITY_OUT_L, 4);
-    if (obj->IO.read_reg_IT_driven) {
+    if (!obj->IO.read_reg_IT_driven) {
         HTS221_Read_Reg_Cplt_Callback();
     }
 }
